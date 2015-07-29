@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E94229A01B68F27600933572 /* SidePanelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E942299F1B68F27600933572 /* SidePanelController.swift */; };
 		E9B0E0EF1B68B18500F2DBB1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B0E0EE1B68B18500F2DBB1 /* AppDelegate.swift */; };
 		E9B0E0F11B68B18500F2DBB1 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B0E0F01B68B18500F2DBB1 /* ViewController.swift */; };
 		E9B0E0F41B68B18500F2DBB1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E9B0E0F21B68B18500F2DBB1 /* Main.storyboard */; };
@@ -26,6 +27,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		E942299F1B68F27600933572 /* SidePanelController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SidePanelController.swift; path = Source/SidePanelController.swift; sourceTree = "<group>"; };
 		E9B0E0E91B68B18500F2DBB1 /* SidePanelController.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SidePanelController.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E9B0E0ED1B68B18500F2DBB1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E9B0E0EE1B68B18500F2DBB1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -56,6 +58,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		E942299C1B68F1E900933572 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				E942299F1B68F27600933572 /* SidePanelController.swift */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
 		E9B0E0E01B68B18500F2DBB1 = {
 			isa = PBXGroup;
 			children = (
@@ -77,6 +87,7 @@
 		E9B0E0EB1B68B18500F2DBB1 /* SidePanelController */ = {
 			isa = PBXGroup;
 			children = (
+				E942299C1B68F1E900933572 /* Source */,
 				E9B0E0EE1B68B18500F2DBB1 /* AppDelegate.swift */,
 				E9B0E0F01B68B18500F2DBB1 /* ViewController.swift */,
 				E9B0E0F21B68B18500F2DBB1 /* Main.storyboard */,
@@ -156,6 +167,7 @@
 		E9B0E0E11B68B18500F2DBB1 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0640;
 				ORGANIZATIONNAME = "周泽勇";
 				TargetAttributes = {
@@ -212,6 +224,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E94229A01B68F27600933572 /* SidePanelController.swift in Sources */,
 				E9B0E0F11B68B18500F2DBB1 /* ViewController.swift in Sources */,
 				E9B0E0EF1B68B18500F2DBB1 /* AppDelegate.swift in Sources */,
 			);
@@ -411,6 +424,7 @@
 				E9B0E10A1B68B18500F2DBB1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		E9B0E10B1B68B18500F2DBB1 /* Build configuration list for PBXNativeTarget "SidePanelControllerTests" */ = {
 			isa = XCConfigurationList;
@@ -419,6 +433,7 @@
 				E9B0E10D1B68B18500F2DBB1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
