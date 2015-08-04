@@ -30,12 +30,109 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     
     // show the panels
     public func showLeftPanel(animated:Bool) {
+        showLeftPanel(animated, shouldBounce: false)
+    }
+    
+    private func showLeftPanel(animated:Bool, shouldBounce:Bool) {
+        state = SidePanelState.LeftVisible
+        loadLeftPanel()
+        
+        adjustCenterFrame()
+        
+        if animated {
+            animateCenterPanel(shouldBounce, completion: nil)
+        } else {
+            self.centerPanelContainer.frame = _centerPanelRestingFrame
+            styleContainer(centerPanelContainer, animate: false, duration: 0)
+            if style == SidePanelStyle.MultipleActive || pushesSidePanels {
+                layoutSideContainers(false, duration: 0)
+            }
+        }
+        
+        if style == SidePanelStyle.SingleActive {
+            tapView = UIView()
+        }
+        
+        toggleScrollsToTopForCenter(false, left: true, right: false)
     }
     
     public func showRightPanel(animated:Bool) {
+        showRightPanel(animated, shouldBounce: false)
+    }
+    
+    private func showRightPanel(animated:Bool, shouldBounce:Bool) {
+        state = SidePanelState.RightVisible
+        loadRightPanel()
+        
+        adjustCenterFrame()
+        if animated {
+            animateCenterPanel(shouldBounce, completion: nil)
+        }else {
+            centerPanelContainer.frame = _centerPanelRestingFrame
+            styleContainer(centerPanelContainer, animate: false, duration: 0)
+            if style == SidePanelStyle.MultipleActive || pushesSidePanels {
+                layoutSideContainers(false, duration: 0)
+            }
+        }
+        
+        if style == SidePanelStyle.SingleActive {
+            tapView = UIView()
+        }
+        toggleScrollsToTopForCenter(false, left: false, right: true)
     }
     
     public func showCenterPanel(animated:Bool) {
+        // make sure center panel isn't hidden
+        if centerPanelHidden {
+            centerPanelHidden = false
+            unhideCenterPanel()
+        }
+        showCenterPanel(animated, shouldBounce: false)
+    }
+    
+    private func showCenterPanel(animated:Bool, shouldBounce:Bool) {
+        
+    }
+    
+    private func unhideCenterPanel() {
+        centerPanelContainer.hidden = false
+        if centerPanel.view.superview != nil {
+            centerPanel.view.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
+            centerPanel.view.frame = centerPanelContainer.bounds
+            stylePanel(centerPanel.view)
+            centerPanelContainer.addSubview(centerPanel.view)
+        }
+    }
+    
+    private func hideCenterPanel() {
+        centerPanelContainer.hidden = true
+        if centerPanel.isViewLoaded() {
+            centerPanel.view.removeFromSuperview()
+        }
+    }
+    
+    private func toggleScrollsToTopForCenter(center:Bool, left:Bool, right:Bool) {
+        // iPhone only supports 1 active UIScrollViewController at a time
+        if UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiom.Phone {
+            toggleScrollsToTop(center, view: centerPanelContainer)
+            toggleScrollsToTop(left, view: leftPanelContainer)
+            toggleScrollsToTop(right, view: rightPanelContainer)
+        }
+    }
+    
+    private func toggleScrollsToTop(enabled:Bool, view:UIView)->Bool {
+        if view.isKindOfClass(UIScrollView) {
+            var scrollView = view as! UIScrollView
+            scrollView.scrollsToTop = enabled
+            return true
+        }else {
+            for subview in view.subviews {
+                if toggleScrollsToTop(enabled, view: subview as! UIView) {
+                    return true
+                }
+            }
+        }
+        return false
     }
     
     // toggle them opened/closed
@@ -54,7 +151,14 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     
     //MARK: Look & Feel
     // style
-    public var style:SidePanelStyle = SidePanelStyle.SingleActive
+    public var style:SidePanelStyle = SidePanelStyle.SingleActive {
+        didSet {
+            if isViewLoaded() {
+                configureContainers()
+                layoutSideContainers(false, duration: 0)
+            }
+        }
+    }
     
     // push side panels instead of overlapping them
     public var pushesSidePanels:Bool = false
@@ -66,7 +170,14 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     public var leftFixedWidth:CGFloat = 0
     
     // the visible width of the left panel
-    public var leftVisibleWidth:CGFloat = 0
+    public var leftVisibleWidth:CGFloat {
+        if self.centerPanelHidden && self.shouldResizeLeftPanel {
+            return self.view.bounds.size.width
+        }else {
+            var width = CGFloat(floorf(Float(self.view.bounds.size.width) * Float(self.leftGapPercentage)))
+            return (self.leftFixedWidth != 0) ? self.leftFixedWidth : width
+        }
+    }
     
     // size the right panel based on % of total screen width
     public var rightGapPercentage:CGFloat = 0.5
@@ -75,13 +186,38 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     public var rightFixedWidth:CGFloat = 0
     
     // the visible width of the right panel
-    public var rightVisibleWidth:CGFloat = 0
+    public var rightVisibleWidth:CGFloat {
+        if self.centerPanelHidden && self.shouldResizeRightPanel {
+            return self.view.bounds.size.width
+        }else {
+            var width = CGFloat(floorf(Float(self.view.bounds.size.width) * Float(self.rightGapPercentage)))
+            return (self.rightFixedWidth != 0) ? self.rightFixedWidth : width
+        }
+    }
+    
+    private var _centerPanelRestingFrame:CGRect = CGRectZero
+    private var _locationBeforePan:CGPoint = CGPointZero
     
     // by default applies a black shadow to the container. override in sublcass to change
     public func styleContainer(container:UIView, animate:Bool, duration:NSTimeInterval) {
+        var shadowPath = UIBezierPath(roundedRect: container.bounds, cornerRadius: 0)
+        if animate {
+            var animation = CABasicAnimation(keyPath: "shadowPath")
+            animation.fromValue = container.layer.shadowPath
+            animation.toValue = shadowPath.CGPath
+            animation.duration = duration
+            container.layer.addAnimation(animation, forKey: "shadowPath")
+        }
+        container.layer.shadowPath = shadowPath.CGPath
+        container.layer.shadowColor = UIColor.blackColor().CGColor
+        container.layer.shadowRadius = 4.0
+        container.layer.shadowOpacity = 0.25
+        container.clipsToBounds = false
     }
     
     public func stylePanel(panel:UIView) {
+        panel.layer.cornerRadius = 0
+        panel.clipsToBounds = true
     }
     
     //MARK: Animation
@@ -93,7 +229,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     public var maximumAnimationDuration:CGFloat = 0.2
     
     // how long the bounce animation should take
-    public var bounceDuration:CGFloat = 0.1
+    public var bounceDuration:NSTimeInterval = 0.1
     
     // how far the view should bounce
     public var bouncePercentage:CGFloat = 0.075
@@ -137,13 +273,33 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     }
     
     public func leftButtonForCenterPanel()->UIBarButtonItem {
-        return UIBarButtonItem()
+        return UIBarButtonItem(image: SidePanelController.defaultImage, style: UIBarButtonItemStyle.Plain, target: self, action: "toggleLeftPanel:")
     }
     
     //MARK: Nuts & Bolts
     
     // Current state of panels. Use KVO to monitor state changes
-    public var state:SidePanelState = SidePanelState.CenterVisible
+    public var state:SidePanelState = SidePanelState.CenterVisible {
+        didSet {
+            if oldValue != self.state {
+                switch self.state {
+                case .CenterVisible:
+                    visiblePanel = centerPanel
+                    leftPanelContainer.userInteractionEnabled = false
+                    rightPanelContainer.userInteractionEnabled = false
+                    break
+                case .LeftVisible:
+                    visiblePanel = leftPanel
+                    leftPanelContainer.userInteractionEnabled = true
+                    break
+                case .RightVisible:
+                    visiblePanel = rightPanel
+                    rightPanelContainer.userInteractionEnabled = true
+                    break
+                }
+            }
+        }
+    }
     
     // Whether or not the center panel is completely hidden
     public var centerPanelHidden:Bool = false
@@ -175,9 +331,6 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     internal(set) var rightPanelContainer:UIView = UIView(frame: CGRectZero)
     internal(set) var centerPanelContainer:UIView = UIView(frame: CGRectZero)
     private var tapView:UIView?
-    
-    private var _centerPanelRestingFrame:CGRect = CGRectZero
-    private var _locationBeforePan:CGPoint = CGPointZero
     
     
     //MARK: Life Cycle
@@ -225,12 +378,35 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         super.viewWillAppear(animated)
         
         // ensure correct view dimensions
+        layoutSideContainers(false, duration: 0)
+        layoutSidePanels()
+        centerPanelContainer.frame = adjustCenterFrame()
+        styleContainer(centerPanelContainer, animate: false, duration: 0)
     }
     
-    override public func viewDidLoad() {
-        super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
+    public override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        adjustCenterFrame()//Account for possible rotation while view appearing
+    }
+    
+    public override func shouldAutorotate() -> Bool {
+        var visiblePanel = self.visiblePanel
+        if shouldDelegateAutorotateToVisiblePanel && visiblePanel.respondsToSelector("shouldAutorotate") {
+            return visiblePanel.shouldAutorotate()
+        }else {
+            return true
+        }
+    }
+    
+    public override func willAnimateRotationToInterfaceOrientation(toInterfaceOrientation: UIInterfaceOrientation, duration: NSTimeInterval) {
+        layoutSideContainers(true, duration: duration)
+        layoutSidePanels()
+        styleContainer(centerPanelContainer, animate: true, duration: duration)
+        if centerPanelHidden {
+            var frame = centerPanelContainer.frame
+            frame.origin.x = (self.state == SidePanelState.LeftVisible) ? centerPanelContainer.frame.size.width : -self.centerPanelContainer.frame.size.width
+            centerPanelContainer.frame = frame
+        }
     }
 
     override public func didReceiveMemoryWarning() {
@@ -261,10 +437,130 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         }
     }
     
+    //MARK: Loading Panels
     private func loadCenterPanelWithPreviousState(previousState:SidePanelState) {
+        placeButtonForLeftPanel()
         
+        // for the multi-active style, it looks better if the new center starts out in it's fullsize and slides in
+        if style == SidePanelStyle.MultipleActive {
+            switch previousState {
+            case .LeftVisible:
+                var frame = centerPanelContainer.frame
+                frame.size.width = view.bounds.size.width
+                centerPanelContainer.frame = frame
+                break
+            case .RightVisible:
+                var frame = centerPanelContainer.frame
+                frame.size.width = view.bounds.size.width
+                frame.origin.x = -rightVisibleWidth
+                centerPanelContainer.frame = frame
+                break
+            default:
+                break
+            }
+        }
     }
     
+    private func loadLeftPanel() {
+        rightPanelContainer.hidden = true
+        if leftPanelContainer.hidden && self.leftPanel != nil {
+            if let leftPanelView = leftPanel?.view {
+                if leftPanelView.superview != nil {
+                    layoutSidePanels()
+                    leftPanelView.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
+                    stylePanel(leftPanelView)
+                    leftPanelContainer.addSubview(leftPanelView)
+                }
+            }
+            leftPanelContainer.hidden = false
+        }
+    }
+    
+    private func loadRightPanel() {
+        leftPanelContainer.hidden = true
+        if rightPanelContainer.hidden && rightPanel != nil {
+            if let rightPanelView = rightPanel?.view {
+                if rightPanelView.superview != nil {
+                    layoutSidePanels()
+                    rightPanelView.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
+                    stylePanel(rightPanelView)
+                    rightPanelContainer.addSubview(rightPanelView)
+                }
+            }
+            rightPanelContainer.hidden = false
+        }
+    }
+    
+    private func unloadPanels() {
+        if let leftPanel = self.leftPanel {
+            if canUnloadLeftPanel && leftPanel.isViewLoaded() {
+                self.leftPanel?.view.removeFromSuperview()
+            }
+        }
+        if let rightPanel = self.rightPanel {
+            if canUnloadRightPanel && rightPanel.isViewLoaded() {
+                rightPanel.view.removeFromSuperview()
+            }
+        }
+    }
+    
+    //MARK: Animation
+    private func calculatedDuration()->NSTimeInterval {
+        var remaining = fabs(centerPanelContainer.frame.origin.x - _centerPanelRestingFrame.origin.x)
+        var max = _locationBeforePan.x == _centerPanelRestingFrame.origin.x ? remaining : _locationBeforePan.x - _centerPanelRestingFrame.origin.x
+        return (max > 0) ? NSTimeInterval(self.maximumAnimationDuration * (remaining / max)) : NSTimeInterval(self.maximumAnimationDuration)
+    }
+    
+    private func animateCenterPanel(shouldBounce:Bool, completion:((Bool)->Void)?) {
+        var _shouldBounce = shouldBounce
+        var bounceDistance = NSTimeInterval((_centerPanelRestingFrame.origin.x - self.centerPanelContainer.frame.origin.x) * self.bouncePercentage)
+        // looks bad if we bounce when the center panel grows
+        if _centerPanelRestingFrame.size.width > self.centerPanelContainer.frame.size.width {
+            _shouldBounce = false
+        }
+        
+        var duration = calculatedDuration()
+        var delay:NSTimeInterval = 0
+        UIView.animateWithDuration(duration, delay: delay, options: UIViewAnimationOptions.CurveLinear | UIViewAnimationOptions.LayoutSubviews, animations: { () -> Void in
+            
+            self.centerPanelContainer.frame = self._centerPanelRestingFrame
+            self.styleContainer(self.centerPanelContainer, animate: true, duration: duration)
+            if self.style == SidePanelStyle.MultipleActive || self.pushesSidePanels {
+                self.layoutSideContainers(false, duration: 0)
+            }
+        }) { (finished:Bool) -> Void in
+            if _shouldBounce {
+                // make sure correct panel is displayed under the bounce
+                if self.state == SidePanelState.CenterVisible {
+                    if bounceDistance > 0 {
+                        self.loadLeftPanel()
+                    }else {
+                        self.loadRightPanel()
+                    }
+                }
+                
+                // animate the bounce
+                UIView.animateWithDuration(self.bounceDuration, delay: delay, options: UIViewAnimationOptions.CurveEaseOut, animations: { () -> Void in
+                    var bounceFrame = self._centerPanelRestingFrame
+                    bounceFrame.origin.x += CGFloat(bounceDistance)
+                    self.centerPanelContainer.frame = bounceFrame
+                }, completion: { (finished:Bool) -> Void in
+                    
+                    UIView.animateWithDuration(self.bounceDuration, delay: delay, options: UIViewAnimationOptions.CurveEaseIn, animations: { () -> Void in
+                        self.centerPanelContainer.frame = self._centerPanelRestingFrame
+                        
+                        }, completion: { (finished:Bool) -> Void in
+                            if let _completion = completion {
+                                _completion(finished)
+                            }
+                    })
+                    
+                })
+            }
+        }
+    }
+    
+    //MARK: Style
     private func layoutSideContainers(animate:Bool, duration:NSTimeInterval) {
         var leftFrame = view.bounds
         var rightFrame = view.bounds
@@ -285,5 +581,72 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         rightPanelContainer.frame = rightFrame
         styleContainer(leftPanelContainer, animate: animate, duration: duration)
         styleContainer(rightPanelContainer, animate: animate, duration: duration)
+    }
+    
+    
+    private func layoutSidePanels() {
+        if let rightPanel = self.rightPanel {
+            if rightPanel.isViewLoaded() {
+                var frame = rightPanelContainer.bounds
+                if shouldResizeRightPanel {
+                    if !pushesSidePanels {
+                        frame.origin.x = rightPanelContainer.bounds.size.width - self.rightVisibleWidth
+                    }
+                    frame.size.width = rightVisibleWidth
+                }
+                rightPanelContainer.frame = frame
+            }
+        }
+        
+        if let leftPanel = self.leftPanel {
+            if leftPanel.isViewLoaded() {
+                var frame = leftPanelContainer.bounds
+                if shouldResizeLeftPanel {
+                    frame.size.width = leftVisibleWidth
+                }
+                leftPanelContainer.frame = frame
+            }
+        }
+    }
+    
+    private func adjustCenterFrame()->CGRect {
+        var frame = view.bounds
+        switch state {
+        case .CenterVisible:
+            frame.origin.x = 0
+            if style == SidePanelStyle.MultipleActive {
+                frame.size.width = view.bounds.size.width
+            }
+            break
+        case .LeftVisible:
+            frame.origin.x = leftVisibleWidth
+            if style == SidePanelStyle.MultipleActive {
+                frame.size.width = view.bounds.size.width - leftVisibleWidth
+            }
+            break
+        case .RightVisible:
+            frame.origin.x = rightVisibleWidth
+            if style == SidePanelStyle.MultipleActive {
+                frame.size.width = view.bounds.size.width - rightVisibleWidth
+            }
+            break
+        }
+        _centerPanelRestingFrame = frame
+        return _centerPanelRestingFrame
+    }
+    
+    private func placeButtonForLeftPanel () {
+        if leftPanel != nil {
+            var buttonController = centerPanel
+            if buttonController.isKindOfClass(UINavigationController) {
+                var nav = buttonController as! UINavigationController
+                if nav.viewControllers.count > 0 {
+                    buttonController = nav.viewControllers[0] as! UIViewController
+                }
+            }
+            if buttonController.navigationItem.leftBarButtonItem != nil {
+                buttonController.navigationItem.leftBarButtonItem = leftButtonForCenterPanel()
+            }
+        }
     }
 }
