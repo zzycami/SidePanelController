@@ -52,6 +52,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     
     //MARK: style
     
+    //MARK: Look & Feel
     // style
     public var style:SidePanelStyle = SidePanelStyle.SingleActive
     
@@ -224,7 +225,12 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         super.viewWillAppear(animated)
         
         // ensure correct view dimensions
-        
+    }
+    
+    override public func viewDidLoad() {
+        super.viewDidLoad()
+
+        // Do any additional setup after loading the view.
     }
 
     override public func didReceiveMemoryWarning() {
