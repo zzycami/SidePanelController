@@ -17,16 +17,80 @@ public enum SidePanelState:Int {
     case CenterVisible
     case LeftVisible
     case RightVisible
+    case NonVisible
 }
+
+private var ja_kvoContext:Void
 
 public class SidePanelController: UIViewController, UIGestureRecognizerDelegate {
     
     //MARK: Usage
     
     // set the panels
-    public var leftPanel:UIViewController?
-    public var centerPanel:UIViewController
-    public var rightPanel:UIViewController?
+    public var leftPanel:UIViewController? {
+        didSet {
+            if let _oldValue = oldValue, _leftPanel = self.leftPanel {
+                if _oldValue != _leftPanel {
+                    _oldValue.willMoveToParentViewController(nil)
+                    _oldValue.view.removeFromSuperview()
+                    _oldValue.removeFromParentViewController()
+                    self.addChildViewController(_leftPanel)
+                    _leftPanel.didMoveToParentViewController(self)
+                    if self.state == SidePanelState.RightVisible {
+                        self.visiblePanel = _leftPanel
+                    }
+                }
+            }
+        }
+    }
+    
+    public var centerPanel:UIViewController {
+        didSet {
+            if self.centerPanel != oldValue {
+                oldValue.removeObserver(self, forKeyPath: "view")
+                oldValue.removeObserver(self, forKeyPath: "viewControllers")
+                self.centerPanel.addObserver(self, forKeyPath: "viewControllers", options: NSKeyValueObservingOptions.allZeros, context: &ja_kvoContext)
+                self.centerPanel.addObserver(self, forKeyPath: "view", options: NSKeyValueObservingOptions.Initial, context: &ja_kvoContext)
+                if self.state == SidePanelState.CenterVisible {
+                    visiblePanel = self.centerPanel
+                }
+            }
+            if self.isViewLoaded() && self.state == SidePanelState.CenterVisible {
+                self.swapCenter(oldValue, previousState: SidePanelState.NonVisible, next: self.centerPanel)
+            }else if self.isViewLoaded() {
+                // update the state immediately to prevent user interaction on the side panels while animating
+                var previousState = self.state
+                self.state = SidePanelState.CenterVisible
+                UIView.animateWithDuration(0.2, animations: { () -> Void in
+                    if self.bounceOnCenterPanelChange {
+                        // first move the centerPanel offscreen
+                        var x = (previousState == SidePanelState.LeftVisible) ? self.view.bounds.size.width : -self.view.bounds.size.width
+                        self._centerPanelRestingFrame.origin.x = x
+                    }
+                }, completion: { (finished:Bool) -> Void in
+                    self.swapCenter(oldValue, previousState: previousState, next: self.centerPanel)
+                    self.showCenterPanel(true, shouldBounce: false)
+                })
+            }
+        }
+    }
+    
+    public var rightPanel:UIViewController? {
+        didSet {
+            if let _oldValue = oldValue, _rightPanel = self.rightPanel {
+                if _oldValue != _rightPanel {
+                    _oldValue.willMoveToParentViewController(nil)
+                    _oldValue.view.removeFromSuperview()
+                    _oldValue.removeFromParentViewController()
+                    self.addChildViewController(_rightPanel)
+                    _rightPanel.didMoveToParentViewController(self)
+                    if self.state == SidePanelState.RightVisible {
+                        self.visiblePanel = _rightPanel
+                    }
+                }
+            }
+        }
+    }
     
     // show the panels
     public func showLeftPanel(animated:Bool) {
@@ -91,7 +155,26 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     }
     
     private func showCenterPanel(animated:Bool, shouldBounce:Bool) {
-        
+        state = SidePanelState.CenterVisible
+        adjustCenterFrame()
+        if animated {
+            animateCenterPanel(shouldBounce, completion: { (finished:Bool) -> Void in
+                self.leftPanelContainer.hidden = true
+                self.rightPanelContainer.hidden = true
+                self.unloadPanels()
+            })
+        }else {
+            centerPanelContainer.frame = _centerPanelRestingFrame
+            styleContainer(centerPanelContainer, animate: false, duration: 0)
+            if style == SidePanelStyle.MultipleActive || pushesSidePanels {
+                layoutSideContainers(false, duration: 0)
+            }
+            leftPanelContainer.hidden = true
+            rightPanelContainer.hidden = true
+            unloadPanels()
+        }
+        tapView = nil
+        toggleScrollsToTopForCenter(true, left: false, right: false)
     }
     
     private func unhideCenterPanel() {
@@ -296,6 +379,8 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
                     visiblePanel = rightPanel
                     rightPanelContainer.userInteractionEnabled = true
                     break
+                default:
+                    break
                 }
             }
         }
@@ -414,7 +499,52 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         // Dispose of any resources that can be recreated.
     }
     
+    //MARK: Delegate
+    public func gestureRecognizerShouldBegin(gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if let tapView = self.tapView, view = gestureRecognizer.view{
+            if view == tapView {
+                return true
+            }else if panningLimitedToTopViewController && !isOnTopLevelViewController(centerPanel) {
+                return false
+            }else if gestureRecognizer.isKindOfClass(UIPanGestureRecognizer) {
+                var pan = gestureRecognizer as! UIPanGestureRecognizer
+                var translate = pan.translationInView(centerPanelContainer)
+                // determine if right swipe is allowed
+                if translate.x < 0 && !allowRightSwipe {
+                    return false
+                }
+                // determine if left swipe is allowed
+                if translate.x > 0 && !allowLeftSwipe {
+                    return false
+                }
+                var possible = (translate.x != 0) && ((fabs(translate.y) / fabs(translate.x)) < 1)
+                if possible && ((translate.x > 0 && self.leftPanel != nil) || (translate.x < 0 && self.rightPanel != nil)) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+    
+    private func addPanGestureToView(view:UIView) {
+        
+    }
+    
     //MARK: Privae Method
+    private func isOnTopLevelViewController(root:UIViewController?)->Bool {
+        if let _root = root {
+            if _root.isKindOfClass(UINavigationController) {
+                var nav = _root as! UINavigationController
+                return nav.viewControllers.count == 1
+            }else if _root.isKindOfClass(UITabBarController) {
+                var tab = _root as! UITabBarController
+                return isOnTopLevelViewController(tab.selectedViewController)
+            }
+        }
+        return root != nil
+    }
+    
+    
     private func configureContainers() {
         self.leftPanelContainer.autoresizingMask = UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleRightMargin
         self.rightPanelContainer.autoresizingMask = UIViewAutoresizing.FlexibleLeftMargin | UIViewAutoresizing.FlexibleHeight
@@ -629,6 +759,8 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
             if style == SidePanelStyle.MultipleActive {
                 frame.size.width = view.bounds.size.width - rightVisibleWidth
             }
+            break
+        default:
             break
         }
         _centerPanelRestingFrame = frame
