@@ -67,9 +67,9 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
                         var x = (previousState == SidePanelState.LeftVisible) ? self.view.bounds.size.width : -self.view.bounds.size.width
                         self._centerPanelRestingFrame.origin.x = x
                     }
-                }, completion: { (finished:Bool) -> Void in
-                    self.swapCenter(oldValue, previousState: previousState, next: self.centerPanel)
-                    self.showCenterPanel(true, shouldBounce: false)
+                    }, completion: { (finished:Bool) -> Void in
+                        self.swapCenter(oldValue, previousState: previousState, next: self.centerPanel)
+                        self.showCenterPanel(true, shouldBounce: false)
                 })
             }
         }
@@ -220,9 +220,19 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     
     // toggle them opened/closed
     public func toggleLeftPanel(sender:AnyObject) {
+        if state == SidePanelState.LeftVisible {
+            showCenterPanel(true, shouldBounce: false)
+        }else if state == SidePanelState.CenterVisible {
+            showLeftPanel(true, shouldBounce: false)
+        }
     }
     
     public func toggleRightPanel(sender:AnyObject) {
+        if state == SidePanelState.RightVisible {
+            showCenterPanel(true, shouldBounce: false)
+        }else {
+            showRightPanel(true, shouldBounce: false)
+        }
     }
     
     
@@ -415,7 +425,33 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     internal(set) var leftPanelContainer:UIView = UIView(frame: CGRectZero)
     internal(set) var rightPanelContainer:UIView = UIView(frame: CGRectZero)
     internal(set) var centerPanelContainer:UIView = UIView(frame: CGRectZero)
-    private var tapView:UIView?
+    private var tapView:UIView? {
+        didSet {
+            if oldValue != self.tapView {
+                self.tapView?.removeFromSuperview()
+                if self.tapView != nil {
+                    self.tapView!.frame = self.centerPanelContainer.bounds
+                    self.tapView!.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
+                    addTapGuestureToView(self.tapView!)
+                    
+                    if self.recognizesPanGesture {
+                        addPanGestureToView(self.tapView!)
+                    }
+                    
+                    centerPanelContainer.addSubview(self.tapView!)
+                }
+            }
+        }
+    }
+    
+    private func addTapGuestureToView(view:UIView) {
+        var tapGesture = UITapGestureRecognizer(target: self, action: "centerPanelTapped:")
+        view.addGestureRecognizer(tapGesture)
+    }
+    
+    func centerPanelTapped(gesture:UIGestureRecognizer) {
+        showCenterPanel(true, shouldBounce: false)
+    }
     
     
     //MARK: Life Cycle
@@ -423,7 +459,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         self.centerPanel = centerPanel
         super.init(nibName: nil, bundle: nil)
     }
-
+    
     required public init(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -435,7 +471,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     
     override public func viewDidLoad() {
         super.viewDidLoad()
-
+        
         view.autoresizingMask = UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleWidth
         centerPanelContainer = UIView(frame: self.view.bounds)
         _centerPanelRestingFrame = centerPanelContainer.frame
@@ -493,7 +529,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
             centerPanelContainer.frame = frame
         }
     }
-
+    
     override public func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -674,7 +710,6 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         default:
             return false
         }
-        return false
     }
     
     
@@ -791,35 +826,35 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
             if self.style == SidePanelStyle.MultipleActive || self.pushesSidePanels {
                 self.layoutSideContainers(false, duration: 0)
             }
-        }) { (finished:Bool) -> Void in
-            if _shouldBounce {
-                // make sure correct panel is displayed under the bounce
-                if self.state == SidePanelState.CenterVisible {
-                    if bounceDistance > 0 {
-                        self.loadLeftPanel()
-                    }else {
-                        self.loadRightPanel()
+            }) { (finished:Bool) -> Void in
+                if _shouldBounce {
+                    // make sure correct panel is displayed under the bounce
+                    if self.state == SidePanelState.CenterVisible {
+                        if bounceDistance > 0 {
+                            self.loadLeftPanel()
+                        }else {
+                            self.loadRightPanel()
+                        }
                     }
-                }
-                
-                // animate the bounce
-                UIView.animateWithDuration(self.bounceDuration, delay: delay, options: UIViewAnimationOptions.CurveEaseOut, animations: { () -> Void in
-                    var bounceFrame = self._centerPanelRestingFrame
-                    bounceFrame.origin.x += CGFloat(bounceDistance)
-                    self.centerPanelContainer.frame = bounceFrame
-                }, completion: { (finished:Bool) -> Void in
                     
-                    UIView.animateWithDuration(self.bounceDuration, delay: delay, options: UIViewAnimationOptions.CurveEaseIn, animations: { () -> Void in
-                        self.centerPanelContainer.frame = self._centerPanelRestingFrame
-                        
+                    // animate the bounce
+                    UIView.animateWithDuration(self.bounceDuration, delay: delay, options: UIViewAnimationOptions.CurveEaseOut, animations: { () -> Void in
+                        var bounceFrame = self._centerPanelRestingFrame
+                        bounceFrame.origin.x += CGFloat(bounceDistance)
+                        self.centerPanelContainer.frame = bounceFrame
                         }, completion: { (finished:Bool) -> Void in
-                            if let _completion = completion {
-                                _completion(finished)
-                            }
+                            
+                            UIView.animateWithDuration(self.bounceDuration, delay: delay, options: UIViewAnimationOptions.CurveEaseIn, animations: { () -> Void in
+                                self.centerPanelContainer.frame = self._centerPanelRestingFrame
+                                
+                                }, completion: { (finished:Bool) -> Void in
+                                    if let _completion = completion {
+                                        _completion(finished)
+                                    }
+                            })
+                            
                     })
-                    
-                })
-            }
+                }
         }
     }
     
@@ -915,3 +950,4 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         }
     }
 }
+ 
