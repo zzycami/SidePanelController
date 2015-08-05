@@ -527,7 +527,94 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     }
     
     private func addPanGestureToView(view:UIView) {
-        
+        var panGesture = UIPanGestureRecognizer(target: self, action: "handlePan:")
+        panGesture.delegate = self
+        panGesture.maximumNumberOfTouches = 1
+        panGesture.minimumNumberOfTouches = 1
+        view.addGestureRecognizer(panGesture)
+    }
+    
+    func handlePan(sender:UIGestureRecognizer) {
+        if !recognizesPanGesture {
+            return
+        }
+        if sender.isKindOfClass(UIPanGestureRecognizer) {
+            var pan = sender as! UIPanGestureRecognizer
+            
+            if pan.state == UIGestureRecognizerState.Began {
+                _locationBeforePan = centerPanelContainer.frame.origin
+            }
+            
+            var translate = pan.translationInView(centerPanelContainer)
+            var frame = _centerPanelRestingFrame
+            frame.origin.x = CGFloat(roundf(Float(correctMovement(translate.x))))
+            
+            if style == SidePanelStyle.MultipleActive {
+                frame.size.width = view.bounds.size.width - frame.origin.x
+            }
+            
+            centerPanelContainer.frame = frame
+            
+            // if center panel has focus, make sure correct side panel is revealed
+            if state == SidePanelState.CenterVisible {
+                if frame.origin.x > 0 {
+                    loadLeftPanel()
+                }else if frame.origin.x < 0 {
+                    loadRightPanel()
+                }
+            }
+            
+            // adjust side panel locations, if needed
+            if style == SidePanelStyle.MultipleActive || pushesSidePanels {
+                layoutSideContainers(false, duration: 0)
+            }
+            
+            if sender.state == UIGestureRecognizerState.Ended {
+                var deltaX = frame.origin.x - _locationBeforePan.x
+                if validateThreshold(deltaX) {
+                    completePan(deltaX)
+                }else {
+                    undoPan()
+                }
+            }else if sender.state == UIGestureRecognizerState.Cancelled {
+                undoPan()
+            }
+        }
+    }
+    
+    func completePan(deltaX:CGFloat) {
+        switch state {
+        case .CenterVisible:
+            if deltaX > 0 {
+                showLeftPanel(true, shouldBounce: bounceOnSidePanelOpen)
+            }else {
+                showRightPanel(true, shouldBounce: bounceOnSidePanelOpen)
+            }
+            break
+        case .LeftVisible:
+            showCenterPanel(true, shouldBounce: bounceOnSidePanelClose)
+            break
+        case .RightVisible:
+            showCenterPanel(true, shouldBounce: bounceOnSidePanelClose)
+            break
+        default:
+            break
+        }
+    }
+    
+    func undoPan() {
+        switch state {
+        case .CenterVisible:
+            showCenterPanel(true, shouldBounce: false)
+            break
+        case .LeftVisible:
+            showLeftPanel(true, shouldBounce: false)
+            break
+        case .RightVisible:
+            showRightPanel(true, shouldBounce: false)
+        default:
+            break
+        }
     }
     
     //MARK: Privae Method
@@ -542,6 +629,52 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
             }
         }
         return root != nil
+    }
+    
+    private func correctMovement(movement:CGFloat)->CGFloat {
+        var position = _centerPanelRestingFrame.origin.x + movement
+        if state == SidePanelState.CenterVisible {
+            if (position > 0 && leftPanel == nil) || position < 0 && rightPanel == nil {
+                return 0
+            }else if !allowLeftOverpan && position > leftVisibleWidth {
+                return leftVisibleWidth
+            }else if !allowRightOverpan && position < -rightVisibleWidth {
+                return -rightVisibleWidth
+            }
+        }else if state == SidePanelState.RightVisible && !allowRightOverpan {
+            if position < -self.rightVisibleWidth {
+                return 0
+            }else if (style == SidePanelStyle.MultipleActive || pushesSidePanels) && position > 0 {
+                return -_centerPanelRestingFrame.origin.x
+            }else if position > rightPanelContainer.frame.origin.x {
+                return rightPanelContainer.frame.origin.x - _centerPanelRestingFrame.origin.x
+            }
+        }else if state == SidePanelState.LeftVisible && !allowLeftOverpan {
+            if position > leftVisibleWidth {
+                return 0
+            }else if state == SidePanelState.LeftVisible && !allowLeftOverpan {
+                return -_centerPanelRestingFrame.origin.x
+            }else if position < leftPanelContainer.frame.origin.x {
+                return leftPanelContainer.frame.origin.x - _centerPanelRestingFrame.origin.x
+            }
+        }
+        
+        return movement
+    }
+    
+    private func validateThreshold(movement:CGFloat)->Bool {
+        var minimum = CGFloat(floorf(Float(view.bounds.size.width)*Float(minimumMovePercentage)))
+        switch state {
+        case .LeftVisible:
+            return movement <= -minimum
+        case .CenterVisible:
+            return fabs(movement) >= minimum
+        case .RightVisible:
+            return movement >= minimum
+        default:
+            return false
+        }
+        return false
     }
     
     
