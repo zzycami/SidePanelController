@@ -576,23 +576,23 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         if let tapView = self.tapView, view = gestureRecognizer.view{
             if view == tapView {
                 return true
-            }else if panningLimitedToTopViewController && !isOnTopLevelViewController(centerPanel) {
+            }
+        }else if panningLimitedToTopViewController && !isOnTopLevelViewController(centerPanel) {
+            return false
+        }else if gestureRecognizer.isKindOfClass(UIPanGestureRecognizer) {
+            var pan = gestureRecognizer as! UIPanGestureRecognizer
+            var translate = pan.translationInView(centerPanelContainer)
+            // determine if right swipe is allowed
+            if translate.x < 0 && !allowRightSwipe {
                 return false
-            }else if gestureRecognizer.isKindOfClass(UIPanGestureRecognizer) {
-                var pan = gestureRecognizer as! UIPanGestureRecognizer
-                var translate = pan.translationInView(centerPanelContainer)
-                // determine if right swipe is allowed
-                if translate.x < 0 && !allowRightSwipe {
-                    return false
-                }
-                // determine if left swipe is allowed
-                if translate.x > 0 && !allowLeftSwipe {
-                    return false
-                }
-                var possible = (translate.x != 0) && ((fabs(translate.y) / fabs(translate.x)) < 1)
-                if possible && ((translate.x > 0 && self.leftPanel != nil) || (translate.x < 0 && self.rightPanel != nil)) {
-                    return true
-                }
+            }
+            // determine if left swipe is allowed
+            if translate.x > 0 && !allowLeftSwipe {
+                return false
+            }
+            var possible = (translate.x != 0) && ((fabs(translate.y) / fabs(translate.x)) < 1)
+            if possible && ((translate.x > 0 && self.leftPanel != nil) || (translate.x < 0 && self.rightPanel != nil)) {
+                return true
             }
         }
         return false
