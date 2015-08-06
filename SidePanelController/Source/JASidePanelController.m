@@ -501,7 +501,6 @@ static char ja_kvoContext;
             frame.size.width = self.view.bounds.size.width - frame.origin.x;
         }
         
-        NSLog(@"frame(%f, %f, %f, %f)", frame.origin.x, frame.origin.y, frame.size.width, frame.size.height);
         self.centerPanelContainer.frame = frame;
         
         // if center panel has focus, make sure correct side panel is revealed
@@ -629,7 +628,6 @@ static char ja_kvoContext;
 
 - (BOOL)_validateThreshold:(CGFloat)movement {
     CGFloat minimum = floorf(self.view.bounds.size.width * self.minimumMovePercentage);
-    NSLog(@"%f", minimum);
     switch (self.state) {
         case JASidePanelLeftVisible: {
             return movement <= -minimum;

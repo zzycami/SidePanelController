@@ -737,7 +737,6 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     
     private func validateThreshold(movement:CGFloat)->Bool {
         var minimum = CGFloat(floorf(Float(view.bounds.size.width)*Float(minimumMovePercentage)))
-        print("\(minimum) \n")
         switch state {
         case .LeftVisible:
             return movement <= -minimum
@@ -795,13 +794,19 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
                 break
             }
         }
+        
+        if let centerPanel = self.centerPanel {
+            centerPanel.view.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
+            centerPanel.view.frame = centerPanelContainer.bounds
+            stylePanel(centerPanel.view)
+        }
     }
     
     private func loadLeftPanel() {
         rightPanelContainer.hidden = true
         if leftPanelContainer.hidden && self.leftPanel != nil {
             if let leftPanelView = leftPanel?.view {
-                if leftPanelView.superview != nil {
+                if leftPanelView.superview == nil {
                     layoutSidePanels()
                     leftPanelView.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
                     stylePanel(leftPanelView)
@@ -816,7 +821,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         leftPanelContainer.hidden = true
         if rightPanelContainer.hidden && rightPanel != nil {
             if let rightPanelView = rightPanel?.view {
-                if rightPanelView.superview != nil {
+                if rightPanelView.superview == nil {
                     layoutSidePanels()
                     rightPanelView.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
                     stylePanel(rightPanelView)
@@ -963,6 +968,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         case .RightVisible:
             frame.origin.x = -rightVisibleWidth
             if style == SidePanelStyle.MultipleActive {
+                frame.origin.x = 0
                 frame.size.width = view.bounds.size.width - rightVisibleWidth
             }
             break
