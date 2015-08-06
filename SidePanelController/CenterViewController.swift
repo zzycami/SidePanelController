@@ -11,14 +11,14 @@ import UIKit
 class CenterViewController: UIViewController {
 
     @IBAction func openLeft(sender: AnyObject) {
-        //self.sidePanelController?.showLeftPanel(true)
-        self.jaSidePanelController.showLeftPanelAnimated(true)
+        self.sidePanelController?.showLeftPanel(true)
+        //self.jaSidePanelController.showLeftPanelAnimated(true)
     }
     
     
     @IBAction func openRight(sender: AnyObject) {
-        //self.sidePanelController?.showRightPanel(true)
-        self.jaSidePanelController.showRightPanelAnimated(true)
+        self.sidePanelController?.showRightPanel(true)
+        //self.jaSidePanelController.showRightPanelAnimated(true)
     }
     
     

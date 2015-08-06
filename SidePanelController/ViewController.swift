@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: JASidePanelController {
+class ViewController: SidePanelController {
 
     override func viewDidLoad() {
         super.viewDidLoad()

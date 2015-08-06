@@ -619,12 +619,13 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
             
             var translate = pan.translationInView(centerPanelContainer)
             var frame = _centerPanelRestingFrame
-            frame.origin.x = CGFloat(roundf(Float(correctMovement(translate.x))))
+            frame.origin.x += CGFloat(roundf(Float(correctMovement(translate.x))))
             
             if style == SidePanelStyle.MultipleActive {
                 frame.size.width = view.bounds.size.width - frame.origin.x
             }
             
+            println("frame(\(frame.origin.x), \(frame.origin.y), \(frame.size.width), \(frame.size.height))")
             centerPanelContainer.frame = frame
             
             // if center panel has focus, make sure correct side panel is revealed
@@ -706,7 +707,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     private func correctMovement(movement:CGFloat)->CGFloat {
         var position = _centerPanelRestingFrame.origin.x + movement
         if state == SidePanelState.CenterVisible {
-            if (position > 0 && leftPanel == nil) || position < 0 && rightPanel == nil {
+            if (position > 0 && leftPanel == nil) || (position < 0 && rightPanel == nil) {
                 return 0
             }else if !allowLeftOverpan && position > leftVisibleWidth {
                 return leftVisibleWidth
@@ -736,6 +737,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     
     private func validateThreshold(movement:CGFloat)->Bool {
         var minimum = CGFloat(floorf(Float(view.bounds.size.width)*Float(minimumMovePercentage)))
+        print("\(minimum) \n")
         switch state {
         case .LeftVisible:
             return movement <= -minimum
