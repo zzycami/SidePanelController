@@ -14,6 +14,9 @@
 		E9B0E0F61B68B18500F2DBB1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9B0E0F51B68B18500F2DBB1 /* Images.xcassets */; };
 		E9B0E0F91B68B18500F2DBB1 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = E9B0E0F71B68B18500F2DBB1 /* LaunchScreen.xib */; };
 		E9B0E1051B68B18500F2DBB1 /* SidePanelControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B0E1041B68B18500F2DBB1 /* SidePanelControllerTests.swift */; };
+		E9B1E0561B72F96E00DF72B8 /* JASidePanelController.m in Sources */ = {isa = PBXBuildFile; fileRef = E9B1E0551B72F96E00DF72B8 /* JASidePanelController.m */; };
+		E9B1E05B1B73007C00DF72B8 /* CenterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9B1E05A1B73007C00DF72B8 /* CenterViewController.swift */; };
+		E9B1E0601B73072600DF72B8 /* UIViewController+JASidePanel.m in Sources */ = {isa = PBXBuildFile; fileRef = E9B1E05F1B73072600DF72B8 /* UIViewController+JASidePanel.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +41,12 @@
 		E9B0E0FE1B68B18500F2DBB1 /* SidePanelControllerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SidePanelControllerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E9B0E1031B68B18500F2DBB1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E9B0E1041B68B18500F2DBB1 /* SidePanelControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidePanelControllerTests.swift; sourceTree = "<group>"; };
+		E9B1E0531B72F96D00DF72B8 /* SidePanelController-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SidePanelController-Bridging-Header.h"; sourceTree = "<group>"; };
+		E9B1E0541B72F96E00DF72B8 /* JASidePanelController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JASidePanelController.h; path = Source/JASidePanelController.h; sourceTree = "<group>"; };
+		E9B1E0551B72F96E00DF72B8 /* JASidePanelController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = JASidePanelController.m; path = Source/JASidePanelController.m; sourceTree = "<group>"; };
+		E9B1E05A1B73007C00DF72B8 /* CenterViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CenterViewController.swift; sourceTree = "<group>"; };
+		E9B1E05E1B73072600DF72B8 /* UIViewController+JASidePanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIViewController+JASidePanel.h"; sourceTree = "<group>"; };
+		E9B1E05F1B73072600DF72B8 /* UIViewController+JASidePanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIViewController+JASidePanel.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,6 +71,11 @@
 			isa = PBXGroup;
 			children = (
 				E942299F1B68F27600933572 /* SidePanelController.swift */,
+				E9B1E0541B72F96E00DF72B8 /* JASidePanelController.h */,
+				E9B1E0551B72F96E00DF72B8 /* JASidePanelController.m */,
+				E9B1E0531B72F96D00DF72B8 /* SidePanelController-Bridging-Header.h */,
+				E9B1E05E1B73072600DF72B8 /* UIViewController+JASidePanel.h */,
+				E9B1E05F1B73072600DF72B8 /* UIViewController+JASidePanel.m */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -89,6 +103,7 @@
 			children = (
 				E942299C1B68F1E900933572 /* Source */,
 				E9B0E0EE1B68B18500F2DBB1 /* AppDelegate.swift */,
+				E9B1E05A1B73007C00DF72B8 /* CenterViewController.swift */,
 				E9B0E0F01B68B18500F2DBB1 /* ViewController.swift */,
 				E9B0E0F21B68B18500F2DBB1 /* Main.storyboard */,
 				E9B0E0F51B68B18500F2DBB1 /* Images.xcassets */,
@@ -226,7 +241,10 @@
 			files = (
 				E94229A01B68F27600933572 /* SidePanelController.swift in Sources */,
 				E9B0E0F11B68B18500F2DBB1 /* ViewController.swift in Sources */,
+				E9B1E0561B72F96E00DF72B8 /* JASidePanelController.m in Sources */,
+				E9B1E0601B73072600DF72B8 /* UIViewController+JASidePanel.m in Sources */,
 				E9B0E0EF1B68B18500F2DBB1 /* AppDelegate.swift in Sources */,
+				E9B1E05B1B73007C00DF72B8 /* CenterViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -355,9 +373,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				INFOPLIST_FILE = SidePanelController/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SidePanelController/SidePanelController-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
@@ -365,9 +386,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				INFOPLIST_FILE = SidePanelController/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SidePanelController/SidePanelController-Bridging-Header.h";
 			};
 			name = Release;
 		};

@@ -8,11 +8,14 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: SidePanelController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        
+        self.centerPanel = self.storyboard?.instantiateViewControllerWithIdentifier("CenterView") as? UIViewController
+        self.leftPanel = self.storyboard?.instantiateViewControllerWithIdentifier("LeftPanel") as? UIViewController
+        self.rightPanel = self.storyboard?.instantiateViewControllerWithIdentifier("RightPanel") as? UIViewController
     }
 
     override func didReceiveMemoryWarning() {

@@ -22,6 +22,24 @@ public enum SidePanelState:Int {
 
 private var ja_kvoContext:Void
 
+public extension UIViewController {
+    public var sidePanelController:SidePanelController? {
+        get {
+            var iter = self.parentViewController
+            while iter != nil {
+                if iter!.isKindOfClass(SidePanelController) {
+                    return iter! as? SidePanelController
+                }else if iter!.parentViewController != nil && iter!.parentViewController != iter! {
+                    iter = iter!.parentViewController
+                }else {
+                    iter = nil
+                }
+            }
+            return nil
+        }
+    }
+}
+
 public class SidePanelController: UIViewController, UIGestureRecognizerDelegate {
     
     //MARK: Usage
@@ -44,13 +62,13 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
         }
     }
     
-    public var centerPanel:UIViewController {
+    public var centerPanel:UIViewController? {
         didSet {
             if self.centerPanel != oldValue {
-                oldValue.removeObserver(self, forKeyPath: "view")
-                oldValue.removeObserver(self, forKeyPath: "viewControllers")
-                self.centerPanel.addObserver(self, forKeyPath: "viewControllers", options: NSKeyValueObservingOptions.allZeros, context: &ja_kvoContext)
-                self.centerPanel.addObserver(self, forKeyPath: "view", options: NSKeyValueObservingOptions.Initial, context: &ja_kvoContext)
+                oldValue?.removeObserver(self, forKeyPath: "view")
+                oldValue?.removeObserver(self, forKeyPath: "viewControllers")
+                self.centerPanel?.addObserver(self, forKeyPath: "viewControllers", options: NSKeyValueObservingOptions.allZeros, context: &ja_kvoContext)
+                self.centerPanel?.addObserver(self, forKeyPath: "view", options: NSKeyValueObservingOptions.Initial, context: &ja_kvoContext)
                 if self.state == SidePanelState.CenterVisible {
                     visiblePanel = self.centerPanel
                 }
@@ -179,18 +197,18 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     
     private func unhideCenterPanel() {
         centerPanelContainer.hidden = false
-        if centerPanel.view.superview != nil {
-            centerPanel.view.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
-            centerPanel.view.frame = centerPanelContainer.bounds
-            stylePanel(centerPanel.view)
-            centerPanelContainer.addSubview(centerPanel.view)
+        if centerPanel?.view.superview != nil {
+            centerPanel!.view.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
+            centerPanel!.view.frame = centerPanelContainer.bounds
+            stylePanel(centerPanel!.view)
+            centerPanelContainer.addSubview(centerPanel!.view)
         }
     }
     
     private func hideCenterPanel() {
         centerPanelContainer.hidden = true
-        if centerPanel.isViewLoaded() {
-            centerPanel.view.removeFromSuperview()
+        if centerPanel!.isViewLoaded() {
+            centerPanel!.view.removeFromSuperview()
         }
     }
     
@@ -428,7 +446,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     private var tapView:UIView? {
         didSet {
             if oldValue != self.tapView {
-                self.tapView?.removeFromSuperview()
+                oldValue?.removeFromSuperview()
                 if self.tapView != nil {
                     self.tapView!.frame = self.centerPanelContainer.bounds
                     self.tapView!.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
@@ -461,12 +479,12 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     }
     
     required public init(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: aDecoder)
     }
     
     deinit {
-        centerPanel.removeObserver(self, forKeyPath: "view")
-        centerPanel.removeObserver(self, forKeyPath: "viewControllers")
+        centerPanel?.removeObserver(self, forKeyPath: "view")
+        centerPanel?.removeObserver(self, forKeyPath: "viewControllers")
     }
     
     override public func viewDidLoad() {
@@ -512,7 +530,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     
     public override func shouldAutorotate() -> Bool {
         var visiblePanel = self.visiblePanel
-        if shouldDelegateAutorotateToVisiblePanel && visiblePanel.respondsToSelector("shouldAutorotate") {
+        if shouldDelegateAutorotateToVisiblePanel && visiblePanel != nil && visiblePanel.respondsToSelector("shouldAutorotate") {
             return visiblePanel.shouldAutorotate()
         }else {
             return true
@@ -536,6 +554,24 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     }
     
     //MARK: Delegate
+    public override func observeValueForKeyPath(keyPath: String, ofObject object: AnyObject, change: [NSObject : AnyObject], context: UnsafeMutablePointer<Void>) {
+        if context == &ja_kvoContext {
+            if keyPath == "view" {
+                if let centerPanel = self.centerPanel {
+                    if centerPanel.isViewLoaded() && recognizesPanGesture {
+                        addPanGestureToView(centerPanel.view)
+                    }
+                }
+            }else if keyPath == "viewControllers" && object as! NSObject == self.centerPanel! {
+                // view controllers have changed, need to replace the button
+                placeButtonForLeftPanel()
+            }
+        }else {
+            super.observeValueForKeyPath(keyPath, ofObject: object, change: change, context: context)
+        }
+    }
+    
+    
     public func gestureRecognizerShouldBegin(gestureRecognizer: UIGestureRecognizer) -> Bool {
         if let tapView = self.tapView, view = gestureRecognizer.view{
             if view == tapView {
@@ -923,7 +959,7 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
             }
             break
         case .RightVisible:
-            frame.origin.x = rightVisibleWidth
+            frame.origin.x = -rightVisibleWidth
             if style == SidePanelStyle.MultipleActive {
                 frame.size.width = view.bounds.size.width - rightVisibleWidth
             }
@@ -938,14 +974,14 @@ public class SidePanelController: UIViewController, UIGestureRecognizerDelegate 
     private func placeButtonForLeftPanel () {
         if leftPanel != nil {
             var buttonController = centerPanel
-            if buttonController.isKindOfClass(UINavigationController) {
+            if buttonController!.isKindOfClass(UINavigationController) {
                 var nav = buttonController as! UINavigationController
                 if nav.viewControllers.count > 0 {
-                    buttonController = nav.viewControllers[0] as! UIViewController
+                    buttonController = nav.viewControllers[0] as? UIViewController
                 }
             }
-            if buttonController.navigationItem.leftBarButtonItem != nil {
-                buttonController.navigationItem.leftBarButtonItem = leftButtonForCenterPanel()
+            if buttonController!.navigationItem.leftBarButtonItem != nil {
+                buttonController!.navigationItem.leftBarButtonItem = leftButtonForCenterPanel()
             }
         }
     }

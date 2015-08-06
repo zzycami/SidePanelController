@@ -4,10 +4,54 @@
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7703"/>
     </dependencies>
     <scenes>
+        <!--Center-->
+        <scene sceneID="ZSg-18-eFF">
+            <objects>
+                <viewController restorationIdentifier="CenterView" storyboardIdentifier="CenterView" title="Center" id="awc-kd-xjh" customClass="CenterViewController" customModule="SidePanelController" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="EKq-AD-Ox5"/>
+                        <viewControllerLayoutGuide type="bottom" id="ncc-TC-eXF"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="OO2-VW-BUg">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="OqM-7V-bTs">
+                                <rect key="frame" x="277" y="161" width="46" height="30"/>
+                                <state key="normal" title="open left">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="openLeft:" destination="awc-kd-xjh" eventType="touchUpInside" id="h7F-lt-RNq"/>
+                                </connections>
+                            </button>
+                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="i0Z-u6-DgG">
+                                <rect key="frame" x="277" y="296" width="46" height="30"/>
+                                <state key="normal" title="open right">
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <action selector="openRight:" destination="awc-kd-xjh" eventType="touchUpInside" id="zya-7y-jAt"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" red="0.83638873247402112" green="0.76968056080205716" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="centerX" secondItem="OqM-7V-bTs" secondAttribute="centerX" id="9x3-ge-jvz"/>
+                            <constraint firstItem="OqM-7V-bTs" firstAttribute="top" secondItem="EKq-AD-Ox5" secondAttribute="bottom" constant="141" id="Gn6-nm-8tP"/>
+                            <constraint firstItem="i0Z-u6-DgG" firstAttribute="top" secondItem="EKq-AD-Ox5" secondAttribute="bottom" constant="276" id="O7w-ly-Dx8"/>
+                            <constraint firstAttribute="centerX" secondItem="i0Z-u6-DgG" secondAttribute="centerX" id="iyP-FK-4ED"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="38x-Qv-IWt" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-129" y="-327"/>
+        </scene>
         <!--Right-->
         <scene sceneID="zgX-P5-6TG">
             <objects>
-                <viewController title="Right" id="rOy-Yo-kdF" sceneMemberID="viewController">
+                <viewController restorationIdentifier="RightPanel" storyboardIdentifier="RightPanel" title="Right" id="rOy-Yo-kdF" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="l5z-hI-OX2"/>
                         <viewControllerLayoutGuide type="bottom" id="XQD-MG-LFT"/>
@@ -43,7 +87,7 @@
         <!--Left-->
         <scene sceneID="Sr8-Pd-MWn">
             <objects>
-                <viewController title="Left" id="gaS-hw-hBC" sceneMemberID="viewController">
+                <viewController restorationIdentifier="LeftPanel" storyboardIdentifier="LeftPanel" title="Left" id="gaS-hw-hBC" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="MIE-vL-0q1"/>
                         <viewControllerLayoutGuide type="bottom" id="TDv-Db-xHE"/>
